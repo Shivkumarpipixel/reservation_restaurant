@@ -1,6 +1,10 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Livewire\Restaurant;
+use App\Http\Livewire\Resarvation;
+use App\Http\Livewire\Booking;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -13,6 +17,10 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/', function () {
-    return view('welcome');
-});
+// Route::get('/', function () {
+//     return view('welcome');
+// });
+
+Route::get('/', Restaurant::class)->name('restaurant');
+Route::get('/resarvations',Resarvation::class)->name('resarvations');
+Route::get('/bookings', Booking::class)->name('bookings');

@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\Restaurant;
+use App\Models\User;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -13,15 +15,13 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('users', function (Blueprint $table) {
+        Schema::create('reservations', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->string('email')->unique();
-            $table->timestamp('email_verified_at')->nullable();
-            $table->string('password');
-            $table->string('mobile_no')->nullable();
-            $table->string('user_type')->nullable();
-            $table->rememberToken();
+            $table->foreignIdFor(Restaurant::class)->default(0);
+            $table->foreignIdFor(User::class)->default(0);
+            $table->string('time_slot'); 
+            $table->integer('reserved_seats'); 
+            $table->date('reservation_date'); 
             $table->timestamps();
         });
     }
@@ -33,6 +33,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('users');
+        Schema::dropIfExists('reservations');
     }
 };
