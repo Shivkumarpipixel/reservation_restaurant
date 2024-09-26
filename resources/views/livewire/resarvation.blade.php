@@ -15,13 +15,19 @@
                                     class="fas fa-map-marker-alt mr-2"></i>{{ $restaurant->address }}</p>
                             <p class="text-gray-600 mb-3"><i
                                     class="fas fa-phone mr-2"></i>{{ $restaurant->phone_number }}</p>
-                            <button wire:click="checkAvailability({{ $restaurant->id }})"
-                                class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded transition duration-300">
-                                Check Availability
-                            </button>
+
+                            @if ($restaurant->isAvailable)
+                                <button wire:click="checkAvailability({{ $restaurant->id }})"
+                                    class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded transition duration-300">
+                                    Check Availability
+                                </button>
+                            @else
+                                <p class="text-red-500 font-bold text-lg">Not Available</p>
+                            @endif
                         </div>
                     </div>
                 @endforeach
+
             </div>
         @else
             <p class="text-gray-600">No restaurants available for today.</p>
@@ -37,16 +43,16 @@
                 @foreach ($selectedRestaurant->availability as $availability)
                     <div class="mb-4 pb-4 border-b last:border-b-0">
                         <p class="font-semibold">{{ ucfirst($availability->meal_type) }}</p>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <p class="text-gray-600"><span class="font-medium">Time Slot:</span>
-                                {{ $availability->time_slot }}</p>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            {{-- <p class="text-gray-600"><span class="font-medium">Time Slot:</span>
+                                {{ $availability->time_slot }}</p> --}}
                             <p class="text-gray-600"><span class="font-medium">Available Seats:</span>
                                 {{ $availability->available_seats }}</p>
                             <p class="text-gray-600"><span class="font-medium">Start Time:</span>
                                 {{ \Carbon\Carbon::parse($availability->opening_time)->format('h:i A') }}</p>
                             <p class="text-gray-600"><span class="font-medium">End Time:</span>
                                 {{ \Carbon\Carbon::parse($availability->closing_time)->format('h:i A') }}</p>
-                        </div>                        
+                        </div>
                     </div>
                 @endforeach
 
@@ -57,7 +63,7 @@
                         <x-input wire:model.defer="users.email" label="Email" placeholder="Enter your email" />
                         <x-input wire:model.defer="users.mobile_no" label="Mobile Number"
                             placeholder="Enter your mobile number" />
-                        <x-select wire:model.defer="reservation.time_slot" label="Time Slot" :options="$selectedRestaurant->availability->pluck('time_slot', 'time_slot')"
+                        <x-select wire:model.defer="reservation.time_slot" label="Time Slot" :options="$selectedRestaurant->availability->pluck('meal_type', 'meal_type')"
                             placeholder="Select a time slot" />
                         <x-input wire:model.defer="reservation.reserved_seats" label="Number of Seats" type="number"
                             placeholder="Enter number of seats" />

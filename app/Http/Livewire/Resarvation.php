@@ -41,6 +41,27 @@ class Resarvation extends Component
         $this->restaurantList = Restaurant::with(['availability' => function ($query) {
             $query->where('day', $this->today)->where('open', true);
         }])->get();
+
+        foreach ($this->restaurantList as $restaurant) {
+            $availability = $restaurant->availability;
+            if ($availability->count()) {
+                $reservations = Reservation::where('restaurant_id', $restaurant->id)
+                    ->whereDate('created_at', Carbon::today())
+                    ->get()
+                    ->groupBy('time_slot');
+
+                foreach ($availability as $slot) {
+                    if (isset($reservations[$slot->time_slot])) {
+                        $reservedSeats = $reservations[$slot->time_slot]->sum('reserved_seats');
+                        $slot->available_seats -= $reservedSeats;
+                    }
+                }
+
+                $restaurant->isAvailable = $availability->sum('available_seats') > 0;
+            } else {
+                $restaurant->isAvailable = false;
+            }
+        }
     }
 
     public function checkAvailability($restaurantId)

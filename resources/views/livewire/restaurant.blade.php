@@ -32,9 +32,9 @@
                                             <x-select label="Available Days" placeholder="Select days" multiselect
                                                 :options="$dayOptions" wire:model.defer="{{ $meal }}Options" />
                                         </div>
-                                        <x-input placeholder="Time Slot"
+                                        {{-- <x-input placeholder="Time Slot"
                                             wire:model.defer="availability.{{ $meal }}.time_slot"
-                                            label="Time Slot" />
+                                            label="Time Slot" /> --}}
                                         <x-input placeholder="Available Seats" type="number"
                                             wire:model.defer="availability.{{ $meal }}.available_seats"
                                             label="Available Seats" />
