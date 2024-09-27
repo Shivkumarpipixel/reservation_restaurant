@@ -24,8 +24,6 @@ class BookingTable extends DataTableComponent
                 ->sortable()->hideIf(1),
             Column::make("Restaurant Name", "restaurant.name")
                 ->sortable()->searchable(),
-            Column::make("Time slot", "time_slot")
-                ->sortable()->searchable(),
             Column::make("Restaurant Image", "restaurant.image")
                 ->sortable()
                 ->format(function ($value, $row, Column $column) {

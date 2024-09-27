@@ -17,20 +17,23 @@
                                     class="fas fa-phone mr-2"></i>{{ $restaurant->phone_number }}</p>
 
                             @if ($restaurant->isAvailable)
+                                <p class="text-green-500 font-bold text-lg mb-2">Available Seats:
+                                    {{ $restaurant->availableSeatsToday }}</p>
                                 <button wire:click="checkAvailability({{ $restaurant->id }})"
                                     class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded transition duration-300">
                                     Check Availability
                                 </button>
+                            @elseif ($restaurant->allBooked)
+                                <p class="text-red-500 font-bold text-lg">All Booked</p>
+                            @elseif ($restaurant->hadSeatsToday)
+                                <p class="text-yellow-500 font-bold text-lg">No Availability</p>
                             @else
-                                <p class="text-red-500 font-bold text-lg">Not Available</p>
+                                <p class="text-gray-500 font-bold text-lg">Not Available Today</p>
                             @endif
                         </div>
                     </div>
                 @endforeach
-
             </div>
-        @else
-            <p class="text-gray-600">No restaurants available for today.</p>
         @endif
     @endif
 

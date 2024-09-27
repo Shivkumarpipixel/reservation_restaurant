@@ -187,8 +187,47 @@ class Restaurant extends Component
 
     public function onEditRestaurant($id)
     {
-        $restaurant = ModelsRestaurant::find($id);
+        $restaurant = ModelsRestaurant::findOrFail($id);
         $this->restaurants = $restaurant->toArray();
+    
+        $availabilities = Availability::where('restaurant_id', $id)->get();
+    
+        $this->availability = [
+            'breakfast' => [],
+            'lunch' => [],
+            'dinner' => []
+        ];
+        $this->breakfastOptions = [];
+        $this->lunchOptions = [];
+        $this->dinnerOptions = [];
+    
+        foreach ($availabilities as $availability) {
+            $mealType = $availability->meal_type;
+    
+            $this->availability[$mealType][] = [
+                'available_seats' => $availability->available_seats,
+                'open' => $availability->open,
+                'opening_time' => $availability->opening_time,
+                'closing_time' => $availability->closing_time,
+                'day' => $availability->day
+            ];
+    
+            switch ($mealType) {
+                case 'breakfast':
+                    $this->breakfastOptions[] = $availability->day;
+                    break;
+                case 'lunch':
+                    $this->lunchOptions[] = $availability->day;
+                    break;
+                case 'dinner':
+                    $this->dinnerOptions[] = $availability->day;
+                    break;
+            }
+        }
+    
+        $closedDates = ClosedDate::where('restaurant_id', $id)->pluck('weekday')->toArray();
+        $this->weekDays = $closedDates;
+    
         $this->openModal = true;
         $this->emit('onRestaurantAddUpdate');
     }

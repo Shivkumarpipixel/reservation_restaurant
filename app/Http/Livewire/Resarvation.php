@@ -50,16 +50,30 @@ class Resarvation extends Component
                     ->get()
                     ->groupBy('time_slot');
 
+                $totalAvailableSeats = 0;
+                $totalSeats = 0;
+                $hadSeatsToday = false;
                 foreach ($availability as $slot) {
-                    if (isset($reservations[$slot->time_slot])) {
-                        $reservedSeats = $reservations[$slot->time_slot]->sum('reserved_seats');
-                        $slot->available_seats -= $reservedSeats;
+                    if ($slot->open) {
+                        $hadSeatsToday = true;
+                        $totalSeats += $slot->available_seats;
+                        if (isset($reservations[$slot->meal_type])) {
+                            $reservedSeats = $reservations[$slot->meal_type]->sum('reserved_seats');
+                            $slot->available_seats -= $reservedSeats;
+                        }
+                        $totalAvailableSeats += max(0, $slot->available_seats);
                     }
                 }
 
-                $restaurant->isAvailable = $availability->sum('available_seats') > 0;
+                $restaurant->isAvailable = $totalAvailableSeats > 0;
+                $restaurant->availableSeatsToday = $totalAvailableSeats;
+                $restaurant->hadSeatsToday = $hadSeatsToday;
+                $restaurant->allBooked = $hadSeatsToday && $totalAvailableSeats == 0;
             } else {
                 $restaurant->isAvailable = false;
+                $restaurant->availableSeatsToday = 0;
+                $restaurant->hadSeatsToday = false;
+                $restaurant->allBooked = false;
             }
         }
     }
@@ -76,12 +90,16 @@ class Resarvation extends Component
                 ->get()
                 ->groupBy('time_slot');
 
+            $totalAvailableSeats = 0;
             foreach ($this->selectedRestaurant->availability as $availability) {
-                if (isset($reservations[$availability->time_slot])) {
-                    $reservedSeats = $reservations[$availability->time_slot]->sum('reserved_seats');
+                if (isset($reservations[$availability->meal_type])) {
+                    $reservedSeats = $reservations[$availability->meal_type]->sum('reserved_seats');
                     $availability->available_seats -= $reservedSeats;
                 }
+                $totalAvailableSeats += max(0, $availability->available_seats);
             }
+
+            $this->selectedRestaurant->availableSeatsToday = $totalAvailableSeats;
 
             $this->checkAvailability = true;
             $this->openrestaurantList = false;
@@ -99,22 +117,45 @@ class Resarvation extends Component
 
     public function makeReservation()
     {
+        $reservations = Reservation::where('restaurant_id', $this->selectedRestaurant->id)
+            ->whereDate('created_at', Carbon::today())
+            ->get()
+            ->groupBy('time_slot');
+
+        $availableSeats = 0;
+        foreach ($this->selectedRestaurant->availability as $availability) {
+            if ($availability->meal_type == $this->reservation['time_slot'] && $availability->open) {
+                $reservedSeats = isset($reservations[$availability->meal_type])
+                    ? $reservations[$availability->meal_type]->sum('reserved_seats')
+                    : 0;
+                $availableSeats = max(0, $availability->available_seats - $reservedSeats);
+                break;
+            }
+        }
+    
         $rules = [
             'users.name' => 'required|string|max:255',
-            'users.email' => 'required|email|max:255',
+            'users.email' => 'required|email|max:255|unique:users,email,' . ($this->users['id'] ?? ''),
             'users.mobile_no' => 'required|string|max:255',
             'reservation.time_slot' => 'required|string',
-            'reservation.reserved_seats' => 'required|integer|min:1',
+            'reservation.reserved_seats' => [
+                'required',
+                'integer',
+                'min:1',
+                'max:' . $availableSeats
+            ],
         ];
 
         $messages = [
             'users.name.required' => 'The name is required.',
             'users.email.required' => 'The email address is required.',
             'users.email.email' => 'Please enter a valid email address.',
+            'users.email.unique' => 'This email address is already in use.',
             'users.mobile_no.required' => 'The mobile number is required.',
             'reservation.time_slot.required' => 'The time slot is required.',
             'reservation.reserved_seats.required' => 'The number of reserved seats is required.',
             'reservation.reserved_seats.min' => 'The number of reserved seats must be at least 1.',
+            'reservation.reserved_seats.max' => 'The number of reserved seats cannot exceed the available seats (' . $availableSeats . ').',
         ];
 
         $this->validate($rules, $messages);
